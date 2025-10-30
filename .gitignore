@@ -1,0 +1,11 @@
+.awcache
+.idea
+.tmp
+.DS_Store
+.tsbuildinfo
+.npmrc
+.env
+Thumbs.db
+
+node_modules
+dist

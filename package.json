@@ -1,0 +1,22 @@
+{
+  "name": "pixi-js-test",
+  "version": "1.0.0",
+  "description": "Simple PixiJS + Typescript + webpack setup",
+  "main": "src/main.ts",
+  "scripts": {
+    "clean": "rimraf ./dist",
+    "build": "npm run clean && webpack",
+    "start": "npm run build && npx serve ."
+  },
+  "dependencies": {
+    "pixi.js": "5.3.12"
+  },
+  "devDependencies": {
+    "serve": "^14.0.1",
+    "ts-loader": "^9.5.4",
+    "typescript": "5.2.2",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1",
+    "rimraf": "^5.0.0"
+  }
+}
