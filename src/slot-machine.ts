@@ -1,6 +1,7 @@
+import { inject, injectable } from "inversify";
 import * as PIXI from "pixi.js";
-import { gameEventBus, GameEventType } from "./game-event-bus";
 import { SlotSymbol, SYMBOL_HEIGHT, SYMBOL_WIDTH } from "./slot-symbol";
+import { GAME_TYPES, GameEventBus, GameEventType } from "./types";
 
 export interface SlotReel {
   container: PIXI.Container;
@@ -19,19 +20,23 @@ export const REEL_COUNT = 3;
 export const VISIBLE_SYMBOLS = 3;
 export const EXTRA_SYMBOL_ROWS = 2; // 1 extra on top, 1 on bottom
 
+@injectable()
 export class SlotMachine extends PIXI.Container {
   public slotReelsContainer: PIXI.Container;
   private _reels: SlotReel[] = [];
   private _running = false;
   private _tweening: any[] = [];
-  private _app: PIXI.Application;
   private _slotTextures: SlotTexture[];
 
-  constructor(app: PIXI.Application, slotTextures: SlotTexture[]) {
+  constructor(
+    @inject(GAME_TYPES.PixiApp) private _app: PIXI.Application,
+    @inject(GAME_TYPES.GameEventBus) private _eventBus: GameEventBus,
+    @inject(GAME_TYPES.SlotTextures) slotTextures: SlotTexture[]
+  ) {
     super();
+
     this.name = "slot-machine-container";
 
-    this._app = app;
     this._slotTextures = slotTextures;
     this.slotReelsContainer = new PIXI.Container();
     this.addChild(this.slotReelsContainer);
@@ -88,11 +93,12 @@ export class SlotMachine extends PIXI.Container {
     this._app.ticker.add(updateReels);
     this._app.ticker.add(updateTweens);
   }
+  
 
   public spin(): void {
     if (this._running) return;
     this._running = true;
-    gameEventBus.emit({ type: GameEventType.SPIN_START });
+    this._eventBus.emit({ type: GameEventType.SPIN_START });
 
     // Randomize the symbol textures for each symbol in each reel before spinning
     for (let i = 0; i < this._reels.length; i++) {
@@ -127,7 +133,7 @@ export class SlotMachine extends PIXI.Container {
 
   private spinComplete = (): void => {
     this._running = false;
-    gameEventBus.emit({ type: GameEventType.SPIN_END });
+    this._eventBus.emit({ type: GameEventType.SPIN_END });
 
     this.checkWin();
   };
@@ -201,7 +207,7 @@ export class SlotMachine extends PIXI.Container {
         rowSymbols.length === this._reels.length && // All reels have a symbol in this row
         rowSymbols.every((s, _, arr) => s.name === arr[0].name) // All symbols names matched
       ) {
-        gameEventBus.emit({
+        this._eventBus.emit({
           type: GameEventType.WIN,
           payload: {
             row,
