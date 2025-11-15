@@ -1,24 +1,6 @@
-import { SlotSymbol } from "./slot-symbol";
+import { GameEvent, GameEventBus, GameEventHandler } from "./types";
 
-export const enum GameEventType {
-  APP_STARTED = "APP_STARTED",
-  SPIN_START = "SPIN_START",
-  SPIN_END = "SPIN_END",
-  WIN = "WIN",
-}
-
-export type GameEvent =
-  | { readonly type: GameEventType.APP_STARTED }
-  | { readonly type: GameEventType.SPIN_START }
-  | { readonly type: GameEventType.SPIN_END }
-  | {
-      readonly type: GameEventType.WIN;
-      readonly payload: { readonly row: number; readonly symbols: SlotSymbol[] };
-    };
-
-export type GameEventHandler = (event: GameEvent) => void;
-
-class GameEventBus {
+class GameEventBusImpl implements GameEventBus {
   private handlers: GameEventHandler[] = [];
 
   public on(handler: GameEventHandler): void {
@@ -37,4 +19,4 @@ class GameEventBus {
   }
 }
 
-export const gameEventBus = new GameEventBus();
+export const gameEventBus = new GameEventBusImpl();

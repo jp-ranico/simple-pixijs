@@ -2,7 +2,7 @@
   "name": "pixi-js-test",
   "version": "1.0.0",
   "description": "Simple PixiJS + Typescript + webpack setup",
-  "main": "src/main.ts",
+  "main": "src/index.ts",
   "scripts": {
     "clean": "rimraf ./dist",
     "build": "npm run clean && webpack",
@@ -12,11 +12,13 @@
     "pixi.js": "5.3.12"
   },
   "devDependencies": {
+    "inversify": "^6.0.2",
     "serve": "^14.0.1",
     "ts-loader": "^9.5.4",
     "typescript": "5.2.2",
     "webpack": "^5.102.1",
     "webpack-cli": "^6.0.1",
-    "rimraf": "^5.0.0"
+    "rimraf": "^5.0.0",
+    "reflect-metadata": "~0.2.2"
   }
 }

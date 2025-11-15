@@ -1,26 +1,41 @@
+import { Container } from "inversify";
 import * as PIXI from "pixi.js";
 import { Foreground } from "./foreground";
-import { GameEvent, gameEventBus, GameEventType } from "./game-event-bus";
 import { SlotMachine, SlotTexture } from "./slot-machine";
+import {
+  GAME_TYPES,
+  GameEvent,
+  GameEventBus,
+  GameEventType,
+  SetupParams,
+} from "./types";
 
-const app = new PIXI.Application({
-  width: window.innerWidth,
-  height: window.innerHeight,
-  backgroundColor: 0x1099bb,
-  resizeTo: window,
-});
-document.body.appendChild(app.view);
-//@ts-ignore
-globalThis.__PIXI_APP__ = app; // For debugging purposes
+export function bootstrap(baseDI: Container): void {
+  const app = new PIXI.Application({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    backgroundColor: 0x1099bb,
+    resizeTo: window,
+  });
+  document.body.appendChild(app.view);
+  //@ts-ignore
+  globalThis.__PIXI_APP__ = app; // For debugging purposes
 
-const loader = PIXI.Loader.shared;
-loader
-  .add("eggHead", "https://pixijs.com/assets/eggHead.png")
-  .add("flowerTop", "https://pixijs.com/assets/flowerTop.png")
-  .add("helmlok", "https://pixijs.com/assets/helmlok.png")
-  .add("skully", "https://pixijs.com/assets/skully.png");
+  const loader = PIXI.Loader.shared;
+  loader
+    .add("eggHead", "https://pixijs.com/assets/eggHead.png")
+    .add("flowerTop", "https://pixijs.com/assets/flowerTop.png")
+    .add("helmlok", "https://pixijs.com/assets/helmlok.png")
+    .add("skully", "https://pixijs.com/assets/skully.png");
 
-loader.load((_, resources) => {
+  loader.load((_, resources) => {
+    setup({ container: baseDI, app, resources });
+  });
+}
+
+function setup(params: SetupParams): void {
+  const { container, app, resources } = params;
+
   const slotTextures: SlotTexture[] = [
     { name: "eggHead", texture: resources.eggHead!.texture! },
     { name: "flowerTop", texture: resources.flowerTop!.texture! },
@@ -28,22 +43,28 @@ loader.load((_, resources) => {
     { name: "skully", texture: resources.skully!.texture! },
   ];
 
-  // Create main game container
-  const gameContainer = new PIXI.Container();
-  gameContainer.name = "game-container";
+  container.bind(GAME_TYPES.SlotTextures).toConstantValue(slotTextures);
+  container.bind<PIXI.Application>(GAME_TYPES.PixiApp).toConstantValue(app);
+  container
+    .bind<SlotMachine>(GAME_TYPES.SlotMachine)
+    .to(SlotMachine)
+    .inSingletonScope();
+  container
+    .bind<Foreground>(GAME_TYPES.Foreground)
+    .to(Foreground)
+    .inSingletonScope();
 
-  // Create slot machine
-  const slotMachine = new SlotMachine(app, slotTextures);
-  gameContainer.addChild(slotMachine);
+  // Add the containers to the stage
+  const slotMachine = container.get<SlotMachine>(GAME_TYPES.SlotMachine);
+  app.stage.addChild(slotMachine);
+  const foreground = container.get<Foreground>(GAME_TYPES.Foreground);
+  app.stage.addChild(foreground);
 
-  // Create foreground
-  const foreground = new Foreground(app, slotMachine);
-  gameContainer.addChild(foreground);
+  setupEvents(container);
+}
 
-  // Add the main game container to the stage
-  app.stage.addChild(gameContainer);
-
-  gameEventBus.emit({ type: GameEventType.APP_STARTED });
+function setupEvents(container: Container): void {
+  const gameEventBus = container.get<GameEventBus>(GAME_TYPES.GameEventBus);
 
   // Example event listeners
   gameEventBus.on((event: GameEvent) => {
@@ -55,4 +76,4 @@ loader.load((_, resources) => {
       console.log(`Win on row ${event.payload.row}`);
     }
   });
-});
+}
